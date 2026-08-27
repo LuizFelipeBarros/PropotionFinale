@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Propotion — O Segredo da Alquimia</title>
+<meta name="description" content="Domine a arte da proporção alquímica: misture ingredientes na razão exata e prepare poções.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=MedievalSharp&family=Almendra:ital,wght@0,400;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Spectral+SC:wght@500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<canvas id="sparks-canvas" aria-hidden="true"></canvas>
+
+<div id="explosion-flash" class="explosion-flash hidden" aria-hidden="true"></div>
+<div id="explosion-particles-container" class="explosion-particles-container" aria-hidden="true"></div>
+
+<div id="toast-feedback" class="toast-feedback hidden" role="status" aria-live="polite">
+  <span class="toast-icon" id="toast-icon-slot"></span>
+  <p id="toast-message"></p>
+</div>
+
+<div id="achievement-toast" class="achievement-toast hidden" role="status" aria-live="polite">
+  <div class="achv-toast-seal" id="achv-toast-icon"></div>
+  <div class="achv-toast-text">
+    <span class="achv-toast-eyebrow">Conquista Desbloqueada</span>
+    <strong id="achv-toast-title">—</strong>
+  </div>
+</div>
+
+<!-- ============ TELA INICIAL ============ -->
+<main id="start-screen" class="screen container">
+  <div class="save-indicator" id="save-indicator" aria-hidden="true"><span></span> Progresso salvo</div>
+
+  <div class="logo-container">
+    <img src="assets/img/logotransparente.png" alt="Propotion — Poções, Magia, Equilíbrio" class="game-logo" id="logo-img">
+  </div>
+
+  <p class="start-subtitle" id="continue-subtitle">Sua jornada começa aqui.</p>
+
+  <div class="button-group">
+    <button id="btn-start" class="btn btn-primary">
+      <span class="svg-icon-sparkle"></span> <span id="btn-start-label">COMEÇAR JORNADA</span>
+    </button>
+    <button id="btn-story" class="btn btn-secondary">
+      <span class="svg-icon-scroll"></span> A LENDA
+    </button>
+    <button id="btn-open-grimoire" class="btn btn-secondary">
+      <span class="svg-icon-book"></span> GRIMÓRIO &amp; CONQUISTAS
+    </button>
+    <button id="btn-reset-progress" class="btn btn-ghost-danger hidden">
+      REINICIAR PROGRESSO
+    </button>
+  </div>
+
+  <footer class="start-footer">
+    <div class="start-stat" id="start-stat-xp"><strong>0</strong><span>XP</span></div>
+    <div class="start-stat-divider"></div>
+    <div class="start-stat" id="start-stat-potions"><strong>0</strong><span>Poções</span></div>
+    <div class="start-stat-divider"></div>
+    <div class="start-stat" id="start-stat-achv"><strong>0/0</strong><span>Conquistas</span></div>
+  </footer>
+</main>
+
+<!-- MODAL: HISTÓRIA -->
+<div id="story-modal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <button class="modal-close-btn" data-close-modal="story-modal" aria-label="Fechar">&times;</button>
+    <h3 class="modal-title">A Arte da Alquimia</h3>
+    <p class="story-text">
+      Dizem que a verdadeira magia não vem apenas dos encantamentos, mas da perfeita harmonia entre os elementos.
+      No coração da Floresta Sussurrante, o antigo <strong>Caldeirão de Cristal</strong> aguarda um novo mestre.
+      Cada gota conta, cada ingrediente importa: uma medida a mais pode causar um desastre — mas a proporção exata
+      revelará o segredo do elixir perfeito.
+    </p>
+    <p class="story-text">Você aceita o desafio de dominar a arte da Alquimia?</p>
+    <button id="btn-modal-start" class="btn btn-primary btn-modal">
+      <span class="svg-icon-sparkle"></span> ACEITAR O DESAFIO
+    </button>
+  </div>
+</div>
+
+<!-- MODAL: GRIMÓRIO (receitas + conquistas, com abas) -->
+<div id="grimoire-modal" class="modal-overlay hidden">
+  <div class="modal-card grimoire-card">
+    <button class="modal-close-btn" data-close-modal="grimoire-modal" aria-label="Fechar">&times;</button>
+    <h3 class="modal-title"><span class="svg-icon-book"></span> Grimório do Alquimista</h3>
+
+    <div class="grimoire-tabs" role="tablist">
+      <button class="grimoire-tab active" data-tab="recipes" role="tab" aria-selected="true">Receitas</button>
+      <button class="grimoire-tab" data-tab="achievements" role="tab" aria-selected="false">Conquistas</button>
+    </div>
+
+    <div class="grimoire-panel active" data-panel="recipes">
+      <p class="grimoire-subtitle">Poções descobertas revelam sua imagem e proporção exata.</p>
+      <div class="recipe-book-grid" id="recipe-book-grid"></div>
+    </div>
+
+    <div class="grimoire-panel" data-panel="achievements">
+      <p class="grimoire-subtitle">Selos conquistados em sua jornada como alquimista.</p>
+      <div class="achievements-grid" id="achievements-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: TUTORIAL -->
+<div id="tutorial-modal" class="modal-overlay hidden">
+  <div class="modal-card tutorial-card">
+    <button class="modal-close-btn" data-close-modal="tutorial-modal" aria-label="Fechar">&times;</button>
+    <h3 class="modal-title"><span class="svg-icon-book"></span> Manual do Aprendiz</h3>
+
+    <div class="tutorial-steps">
+      <div class="step-slide active" data-step="1">
+        <span class="step-badge">Passo 1 de 4</span>
+        <h4><span class="svg-icon-scroll"></span> Fases &amp; Ingredientes</h4>
+        <p>Cada rank de alquimista libera mais ingredientes por poção: 2 para Aprendizes, até 7 para os Grão-Arcanistas. Quanto mais ingredientes, mais complexa a proporção.</p>
+      </div>
+      <div class="step-slide" data-step="2">
+        <span class="step-badge">Passo 2 de 4</span>
+        <h4><span class="svg-icon-target"></span> O Anel de Proporção</h4>
+        <p>O anel dourado ao redor do frasco mostra a receita exata. Conforme você adiciona ingredientes, um segundo anel colorido cresce — quando os dois se alinham perfeitamente, a proporção está correta.</p>
+      </div>
+      <div class="step-slide" data-step="3">
+        <span class="step-badge">Passo 3 de 4</span>
+        <h4><span class="svg-icon-wand"></span> Regra de Três N-Dimensional</h4>
+        <p>Para a proporção 1:2:1 (4 partes), produzir 20 unidades exige multiplicar cada parte por 5 → <strong>5 : 10 : 5</strong>. Todo ingrediente cresce na mesma escala.</p>
+      </div>
+      <div class="step-slide" data-step="4">
+        <span class="step-badge">Passo 4 de 4</span>
+        <h4><span class="svg-icon-flask"></span> Cuidado com a Explosão!</h4>
+        <p>Proporção errada faz a poção explodir — sem penalidade além de tentar de novo. Acerte em sequência para ganhar bônus de XP por combo.</p>
+      </div>
+    </div>
+
+    <div class="tutorial-nav">
+      <button id="btn-tut-prev" class="btn btn-secondary btn-small" disabled>Anterior</button>
+      <div class="tutorial-dots" id="tutorial-dots">
+        <span class="dot active"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      </div>
+      <button id="btn-tut-next" class="btn btn-primary btn-small">Próximo</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: RECOMPENSA DE FASE -->
+<div id="reward-modal" class="modal-overlay hidden">
+  <div class="modal-card reward-card">
+    <div class="reward-badge-avatar"><span class="reward-icon svg-icon-trophy"></span></div>
+    <h3 class="reward-title">FASE CONCLUÍDA!</h3>
+    <p id="reward-mission-name" class="reward-subtitle">Você dominou a Poção!</p>
+
+    <div class="reward-box">
+      <span class="reward-tag">RECOMPENSA</span>
+      <div class="reward-desc-row">
+        <span class="reward-sub-icon svg-icon-trophy"></span>
+        <p id="reward-text-desc" class="reward-desc">+150 XP</p>
+      </div>
+      <p class="reward-streak" id="reward-streak-line"></p>
+    </div>
+
+    <button id="btn-claim-reward" class="btn btn-primary btn-hero-brew btn-reward-claim">
+      <span class="svg-icon-sparkle"></span> <span id="btn-claim-label">AVANÇAR</span>
+    </button>
+  </div>
+</div>
+
+<!-- MODAL: CONFIRMAR RESET -->
+<div id="confirm-reset-modal" class="modal-overlay hidden">
+  <div class="modal-card confirm-card">
+    <h3 class="modal-title modal-title-danger">Apagar todo o progresso?</h3>
+    <p class="story-text">Isso vai zerar seu XP, fases desbloqueadas, poções descobertas e conquistas. Essa ação não pode ser desfeita.</p>
+    <div class="confirm-actions">
+      <button id="btn-confirm-reset-cancel" class="btn btn-secondary btn-small">Cancelar</button>
+      <button id="btn-confirm-reset-ok" class="btn btn-ghost-danger btn-small">Sim, apagar tudo</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ERRO DE DADOS SALVOS -->
+<div id="data-error-modal" class="modal-overlay hidden">
+  <div class="modal-card confirm-card">
+    <h3 class="modal-title modal-title-danger">Seu grimório estava corrompido</h3>
+    <p class="story-text">Não conseguimos ler seu progresso salvo anteriormente — os dados podem ter sido danificados. Sua jornada foi reiniciada para que você possa continuar com segurança.</p>
+    <div class="confirm-actions">
+      <button id="btn-data-error-ok" class="btn btn-primary btn-small">Entendido, vamos começar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TELA DO LABORATÓRIO ============ -->
+<section id="game-screen" class="screen-full hidden">
+
+  <header class="lab-header">
+    <div class="header-left">
+      <button id="btn-back" class="btn-icon-round" title="Menu Principal" aria-label="Voltar ao menu principal">←</button>
+      <div class="header-brand"><img src="assets/img/logotransparente.png" alt="Propotion" class="header-logo-img"></div>
+    </div>
+
+    <div class="lab-title-area">
+      <span class="phase-subtitle-badge" id="phase-badge">FASE 1</span>
+      <h2 id="phase-title">O PRIMEIRO ELIXIR DE CURA</h2>
+      <p id="player-rank" class="player-rank-subtext">Aprendiz de Alquimia</p>
+      <div class="title-divider-line"><span class="divider-sparkle">✦</span></div>
+    </div>
+
+    <div class="header-right">
+      <button id="btn-tutorial" class="header-action-btn" title="Tutorial"><span class="svg-icon-help"></span> TUTORIAL</button>
+      <button id="btn-recipe-book" class="header-action-btn" title="Grimório"><span class="svg-icon-book"></span> GRIMÓRIO</button>
+      <div class="lab-stats">
+        <span class="stat-badge" title="Experiência"><span class="svg-icon-trophy"></span> <strong id="xp-count">0</strong></span>
+        <span class="stat-badge" title="Poções preparadas"><span class="svg-icon-flask"></span> <strong id="potions-count">0</strong></span>
+        <span class="stat-badge stat-badge-streak" id="streak-badge" title="Sequência sem explosões"><span class="svg-icon-streak"></span> <strong id="streak-count">0</strong></span>
+      </div>
+    </div>
+  </header>
+
+  <div class="mission-banner" id="mission-banner">
+    <div class="mission-avatar-container">
+      <div class="mission-avatar-ring">
+        <div class="mission-avatar-img-wrapper" id="mission-avatar-wrapper"></div>
+      </div>
+    </div>
+    <div class="mission-info">
+      <span class="mission-badge" id="mission-badge-text">FASE 1 &bull; APRENDIZ DE ALQUIMIA</span>
+      <h4 id="mission-title">POÇÃO DE CURA</h4>
+      <p id="mission-desc">Prepare 10 unidades mantendo a proporção 2 : 3.</p>
+    </div>
+    <div class="mission-reward">
+      <span class="reward-label">INGREDIENTES EXIGIDOS</span>
+      <strong id="mission-reward-text">2 Ingredientes</strong>
+    </div>
+  </div>
+
+  <div class="lab-grid">
+
+    <!-- PAINEL ESQUERDO: MISSÕES (página de grimório) -->
+    <aside class="panel recipe-panel" aria-label="Lista de fases">
+      <h3 class="panel-title"><span class="svg-icon-target"></span> PÁGINAS DO GRIMÓRIO</h3>
+      <ul class="recipe-list" id="recipe-list"></ul>
+    </aside>
+
+    <!-- PAINEL CENTRAL: BANCADA -->
+    <main class="panel cauldron-panel">
+
+      <div class="recipe-header-card" id="recipe-header-card">
+        <div class="recipe-header-avatar"><span class="potion-badge-icon" id="current-potion-icon"></span></div>
+        <div class="recipe-header-details">
+          <h3 id="current-potion-name">POÇÃO DE CURA</h3>
+          <p class="recipe-ratio-tag">Proporção Base: <strong id="current-potion-ratio">2 : 3</strong></p>
+        </div>
+      </div>
+
+      <div class="target-card">
+        <p class="target-label"><span class="svg-icon-target"></span> META DE PRODUÇÃO</p>
+        <div class="target-controls">
+          <span>Produzir</span>
+          <div class="target-selector">
+            <button id="target-minus" class="btn-step" aria-label="Diminuir meta">−</button>
+            <span id="target-quantity-display" class="target-qty">10</span>
+            <button id="target-plus" class="btn-step" aria-label="Aumentar meta">+</button>
+          </div>
+          <span>unidades</span>
+        </div>
+      </div>
+
+      <div class="potion-stage" id="potion-stage">
+        <svg class="ratio-ring" id="ratio-ring" viewBox="0 0 220 220" aria-hidden="true">
+          <circle class="ratio-ring-track" cx="110" cy="110" r="100"></circle>
+          <g id="ratio-ring-target"></g>
+          <g id="ratio-ring-fill"></g>
+        </svg>
+        <div class="rune-pedestal"></div>
+        <div class="potion-image-wrapper" id="potion-image-wrapper">
+          <img src="assets/img/potion.png" alt="Frasco de poção" class="potion-png-base" id="potion-png-base">
+          <div class="potion-liquid-overlay" id="potion-liquid-overlay">
+            <div class="potion-liquid-fill" id="potion-liquid-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-divider-tag">
+        <span class="line"></span><span class="text">ADICIONE OS INGREDIENTES</span><span class="line"></span>
+      </div>
+
+      <div class="ingredients-control">
+        <div class="ingredient-rows" id="ingredient-rows"></div>
+
+        <div class="mix-summary">
+  <span class="mix-hint" id="mix-hint"></span>
+    </div>
+
+        <button id="btn-brew" class="btn btn-primary btn-brew btn-hero-brew">
+          <span class="svg-icon-wand"></span> PREPARAR POÇÃO
+        </button>
+      </div>
+    </main>
+
+    <!-- PAINEL DIREITO: PERGAMINHO + INVENTÁRIO -->
+    <aside class="panel info-panel" aria-label="Dicas e inventário">
+      <div class="wizard-tip-card">
+        <div class="tip-header"><span class="wizard-icon svg-icon-wand"></span><h4>DICA DO MAGO</h4></div>
+        <p class="tip-text" id="wizard-tip-text">"Mantenha a mesma proporção da receita original — o resto é confiança."</p>
+        <div class="math-explainer">
+          <p class="math-formula" id="math-formula">2 : 3 = 4 : 6 = 8 : 12</p>
+          <p class="math-subtext" id="math-subtext">Regra de Três N-Dimensional:<br><code id="code-formula">qtdA · 3 = qtdB · 2</code></p>
+        </div>
+      </div>
+
+      <div class="inventory-card">
+        <h4><span class="svg-icon-backpack"></span> INVENTÁRIO</h4>
+        <div class="inventory-grid" id="inventory-grid">
+          <p class="empty-inventory">Nenhuma poção preparada ainda. Prepare sua primeira receita para começar sua coleção.</p>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
